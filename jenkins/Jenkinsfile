@@ -24,7 +24,7 @@ pipeline {
                 echo "--- Starting Build Information ---"
                 echo "Project Name: ${env.JOB_NAME}"
                 echo "Build Number: ${env.BUILD_NUMBER}"
-                echo "Git Branch: ${env.BRANCH_NAME}"
+                echo "Git Branch: ${env.GIT_BRANCH}"
                 echo "Jenkins URL: ${env.JENKINS_URL}"
                 echo "----------------------------------"
             }
