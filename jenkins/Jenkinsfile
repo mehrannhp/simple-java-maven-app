@@ -1,19 +1,45 @@
 pipeline {
     agent any
-    tools {
-    maven "maven-3.9" 
+
+    // ۱. متغیرهای گلوبال (تعریف شده توسط شما)
+    environment {
+        APP_NAME = "Java-Maven-Project"
+        ENVIRONMENT = "Production-Test"
     }
+
+    tools {
+        maven "maven-3.9" 
+    }
+
     options {
         skipStagesAfterUnstable()
+        // این گزینه باعث می‌شود خروجی کنسول رنگی و تمیزتر باشد
+        ansiColor('xterm')
     }
+
     stages {
+        stage('Initialize') {
+            steps {
+                // استفاده از متغیرهای پیش‌فرض جنکینز (Built-in Variables)
+                echo "--- Starting Build Information ---"
+                echo "Project Name: ${env.JOB_NAME}"
+                echo "Build Number: ${env.BUILD_NUMBER}"
+                echo "Git Branch: ${env.BRANCH_NAME}"
+                echo "Jenkins URL: ${env.JENKINS_URL}"
+                echo "----------------------------------"
+            }
+        }
+
         stage('Build') {
             steps {
+                echo "Building ${APP_NAME} in ${ENVIRONMENT} mode..."
                 sh 'mvn -B -DskipTests clean package'
             }
         }
+
         stage('Test') {
             steps {
+                echo "Running unit tests for version ${env.BUILD_ID}..."
                 sh 'mvn test'
             }
             post {
@@ -22,10 +48,31 @@ pipeline {
                 }
             }
         }
+
         stage('Deliver') { 
+            // ۲. متغیر محلی (فقط مخصوص این استیج)
+            environment {
+                DEPLOY_PATH = "/var/www/html/app"
+            }
             steps {
+                echo "Finalizing deployment for ${APP_NAME}"
+                echo "Target Path: ${DEPLOY_PATH}"
+                
+                // چاپ کردن یوزر اجرا کننده (اگر افزونه Build User Vars نصب باشد)
+                // echo "Build started by: ${env.BUILD_USER}"
+                
                 sh './jenkins/scripts/deliver.sh' 
             }
+        }
+    }
+
+    // ۳. بخش Post برای کل پایپ‌لاین (گزارش نهایی)
+    post {
+        success {
+            echo "Congratulations! Build #${env.BUILD_NUMBER} passed successfully."
+        }
+        failure {
+            echo "Oh no! The build failed. Check the logs at ${env.BUILD_URL}/console"
         }
     }
 }
